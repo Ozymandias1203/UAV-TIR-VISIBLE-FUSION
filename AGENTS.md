@@ -16,7 +16,15 @@
 - [M400-H30T-CALIB-CHESSBOARD/](M400-H30T-CALIB-CHESSBOARD/) 是标定板影像数据。
 - [test_Arctic/](test_Arctic/) 是目标处理数据集，热红外分辨率为 1280×1024，可见光分辨率为 4032×3024。
 
-## 推荐系统架构
+## 设计文档体系
+- [docs/architecture.md](docs/architecture.md) 定义全流程数据流、模块边界、运行模式与跨层约束。
+- [docs/file_formats.md](docs/file_formats.md) 定义标定、去畸变、匹配、辐射、重建、富集与导出各阶段的数据契约。
+- [docs/calibration_model.md](docs/calibration_model.md) 定义双光谱标定前处理、相机模型、畸变参数与质量门槛。
+- [docs/matching_algorithm.md](docs/matching_algorithm.md) 定义 TWMM 适配、对应点管理、异常值剔除与单应性估计。
+- [docs/radiometry_model.md](docs/radiometry_model.md) 定义热红外元数据解析、辐射校正与温度矩阵生成。
+- [docs/reconstruction_and_enrichment.md](docs/reconstruction_and_enrichment.md) 定义 Metashape 重建、重投影、可见性与点云热富集。
+
+## 系统架构
 
 ### 1. 配置与数据入口层
 - 负责读取数据集路径、相机配置、环境参数、输出目录与运行模式。
@@ -132,7 +140,8 @@
 - 每次改动后都应保留至少一个可复现的数据样例，用于回归验证。
 
 ## 修改纪律
-- 如果匹配算法发生变化，必须同步更新本文件。
+- 如果匹配算法发生变化，必须同步更新本文件，并同步更新 [docs/matching_algorithm.md](docs/matching_algorithm.md) 与受影响的数据契约。
+- 如果标定模型、热辐射模型、Metashape 流程或热富集策略发生变化，必须先更新对应设计文档，再更新实现。
 - 不要把 [技术路线参考文献.md](技术路线参考文献.md) 或 [可见光与热红外影像匹配参考文献.md](可见光与热红外影像匹配参考文献.md) 当作需要同步修改的实现文件；它们只是为交流方便而命名的参考文献 markdown 文件。
 - 如果数据格式或元数据字段变化，必须先更新数据契约，再更新实现。
 - 如果新依赖影响到某一层边界，必须记录它属于哪一层，以及为什么需要它。
