@@ -7,6 +7,8 @@
 ## 2. 数据边界
 
 - 业务处理数据集：`test_Arctic/`
+- `test_Arctic/tiff_dir/` 中的 TIFF 热红外帧是本项目热红外主处理对象。
+- `test_Arctic/thermal_dir/` 中的 JPG 热红外帧仅保留为预览、副本和人工检查材料。
 - 标定数据集：`M400-H30T-CALIB-CHESSBOARD/`
 - 影像元数据：`metadata_all.json`
 - 初始相机标定：`H30T_RGB.xml` 与 `H30T_NIR.xml`
