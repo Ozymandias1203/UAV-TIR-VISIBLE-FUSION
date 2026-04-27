@@ -7,7 +7,7 @@
 ## 2. 适用范围
 
 - 适用于 H30T RGB 相机与热红外相机的独立内参估计。
-- 适用于 9×6 棋盘格标定数据。
+- 适用于 12×9 棋盘格标定数据。
 - 适用于后续去畸变和单应性估计所需的几何基础图像生成。
 - 不负责热辐射校正，也不负责三维重建。
 
@@ -59,27 +59,34 @@
 
 对于每个传感器，至少应保存以下参数：
 
-- `image_width`
-- `image_height`
-- `focal_length`
-- `principal_point_x`
-- `principal_point_y`
+- `image_width_px`
+- `image_height_px`
+- `focal_length_px`
+- `principal_point_x_px`
+- `principal_point_y_px`
 - `affinity_or_skew`
 - `radial_coefficients`
-- `reprojection_rms`
+- `reprojection_rms_px`
 - `quality_flag`
 
 ### 5.2 参数语义
 
-- 主点坐标必须明确是绝对像素坐标还是相对图像中心的偏移量。
+- `focal_length_px` 是标定模型中的像素焦距，不是 ExifTool 读取到的毫米焦距。
+- 主点坐标在本项目的机器可读输出中一律使用绝对像素坐标。
 - 畸变参数必须与实际使用的模型一致，不得将不同模型的符号约定混用。
 - 若某一版输出采用 H30T XML 风格的保存格式，应保持与输入字段的映射可追踪。
 
 ### 5.3 与 H30T XML 的对齐原则
 
 - XML 中的宽高字段应与图像真实分辨率一致。
-- XML 中的 `f`、`cx`、`cy`、`b1`、`k1`、`k2`、`k3` 应被视作当前设备链路的核心几何参数。
+- XML 中的 `f`、`cx`、`cy`、`b1`、`k1`、`k2`、`k3` 应被视作当前设备链路的核心几何参数，其中 `f` 对应像素焦距，`cx` / `cy` 对应中心偏移。
 - 若输出到其他系统时需要转换为绝对主点坐标，转换规则必须在文件格式层显式记录。
+
+### 5.4 内部标准坐标
+
+- 本项目内部一律使用绝对像素主点坐标作为标准形式。
+- 读取 H30T XML 时，必须一次性将 `cx` / `cy` 转换为绝对主点：`principal_point_x_px = image_width_px / 2 + cx`，`principal_point_y_px = image_height_px / 2 + cy`。
+- 后续的文件格式、重投影和热富集模块只能消费绝对像素主点，不得再次混入中心偏移量。
 
 ## 6. 标定流程
 

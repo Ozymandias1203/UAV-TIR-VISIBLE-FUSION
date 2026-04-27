@@ -16,15 +16,19 @@
 
 ### 3.1 输入
 
-- 去畸变后的 RGB 图像
-- 去畸变后的热红外图像
+- 去畸变后的 RGB 图像路径或对象引用
+- 去畸变后的热红外图像路径或对象引用
 - 可选 ROI、初始尺度信息或裁剪信息
-- 相关标定参数和图像尺寸信息
+- 标定参数和图像尺寸信息
+- `patch_size`、`search_radius`、`level_max`
+- `scale` 配置，其中必须显式包含 `thermal` 与 `visible` 两个键
+- 可选诊断开关，如是否保存叠加图或中间结果
 
 ### 3.2 输出
 
 - 对应点集合
 - 内点 / 外点标记
+- 外点剔除结果
 - 单应性矩阵
 - 匹配置信度或质量评分
 - 诊断可视化图
@@ -69,6 +73,11 @@ TWMM 生产适配器应负责以下工作：
 - 调用 TWMM 的生产入口。
 - 将 TWMM 输出转换为统一的 `MatchResult` 语义对象。
 - 将诊断信息写入日志和可视化文件。
+- 生产实现应固定使用 `TWMM-main/TAMM_clean/thermal_visible.py` 中的 `ThermalVisble`、`get_img_features(method='CFOG', bin_size=9)`、`get_correspoints(method='TAMM', ...)`、`filter_outliers(...)` 和 `findHomoraphy(...)` 这一条主链路。
+- `scale` 在生产适配器中必须显式传入字典，至少包含 `thermal` 和 `visible` 两个键；`ThermalVisble` 内部的整数退化分支只作为旧脚本兼容路径，不得作为生产默认。
+- `thermal_upsample`、`crop_size`、`crop_offset`、`patch_size`、`search_radius` 和 `level_max` 都必须写入运行配置或运行清单，不能靠代码内硬编码。
+- `results_SIFT_SURF_RIFT_SCB_HOPC.py` 只能作为比较和实验参考，不得作为生产主入口。
+- 若 `findHomoraphy` 失败、内点过少或单应性不稳定，必须返回低置信结果并保留诊断材料，不得伪造高质量输出。
 
 适配器不得篡改 TWMM 的核心算法流程，只能做输入输出转换和参数组织。
 
@@ -78,11 +87,15 @@ TWMM 生产适配器应负责以下工作：
 
 对应点应至少包含：
 
-- RGB 图像坐标
-- 热红外图像坐标
-- 是否为内点
-- 所属金字塔层级
-- 局部相似度或置信信息
+- `rgb_x`
+- `rgb_y`
+- `thermal_x`
+- `thermal_y`
+- `is_inlier`
+- `pyramid_level`
+- `patch_size`
+- `score`
+- `local_confidence`
 
 ### 6.2 单应性矩阵
 
@@ -132,6 +145,8 @@ TWMM 生产适配器应负责以下工作：
 - 为 enrichment 层提供单应性矩阵和对应点质量指标。
 - 不依赖 Metashape 项目状态。
 - 不直接读取或修改温度矩阵。
+- 允许直接依赖 `TWMM-main/TAMM_clean/image_process.py`、`TWMM-main/TAMM_clean/thermal_visible.py`、`TWMM-main/TAMM_clean/tools.py`、`TWMM-main/TAMM_clean/TAMM.py` 和 `TWMM-main/TAMM_clean/CFOG.py`，但不允许在其他层重写同等逻辑。
+- `TWMM-main/results_SIFT_SURF_RIFT_SCB_HOPC.py` 只属于实验比较面，不属于生产依赖。
 
 ## 11. 非目标
 

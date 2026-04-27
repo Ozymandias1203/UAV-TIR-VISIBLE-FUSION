@@ -28,6 +28,7 @@
 | 逻辑对象 | 推荐格式 | 主要用途 |
 |---|---|---|
 | 运行清单 | JSON | 记录一次批处理任务的输入、输出和状态 |
+| 运行配置 | JSON | 记录一次运行的参数、阈值、路径与工具链版本 |
 | 标定结果 | XML + JSON | 与现有相机参数文件和机器可读摘要兼容 |
 | 去畸变图像 | PNG / TIFF | 保留几何校正后的像素内容 |
 | 匹配结果 | JSON + CSV + PNG | 记录对应点、外点、单应性和可视化检查图 |
@@ -49,6 +50,9 @@
 - `created_at`
 - `operator`
 - `pipeline_version`
+- `dataset_profile_ref`
+- `runtime_config_ref`
+- `config_digest`
 - `input_paths`
 - `output_paths`
 - `stage_status`
@@ -61,6 +65,14 @@
 - 不得只记录相对路径而不保留项目根上下文。
 - 每个阶段结束后都应更新状态和时间戳。
 
+### 5.4 `run_id` 与目录规则
+
+- `run_id` 必须在整个工作区中唯一，建议格式为 `dataset_id__YYYYMMDDTHHMMSSZ__configsha8`。
+- `dataset_id` 必须与 [docs/dataset_profile.md](dataset_profile.md) 中记录的数据集边界一致。
+- `configsha8` 应来自运行配置的规范化摘要，确保相同配置可被追溯到相同运行。
+- 所有阶段产物都应写入 `runs/<run_id>/` 之下，不得散落在工作区根目录。
+- 若 `run_id` 已存在，则新运行必须显式选择覆盖、另起一个 `run_id`，或终止。
+
 ## 6. 标定结果
 
 ### 6.1 文件角色
@@ -70,13 +82,14 @@
 ### 6.2 必要字段
 
 - `sensor_name`
-- `image_width`
-- `image_height`
-- `focal_length`
-- `principal_point`
+- `image_width_px`
+- `image_height_px`
+- `focal_length_px`
+- `principal_point_x_px`
+- `principal_point_y_px`
 - `affinity_or_skew`
 - `distortion_coefficients`
-- `reprojection_rms`
+- `reprojection_rms_px`
 - `chessboard_detection_rate`
 - `quality_flag`
 - `source_images`
@@ -84,7 +97,7 @@
 ### 6.3 约束
 
 - 主参数必须对应到实际图像尺寸。
-- 主点偏移必须注明是相对图像中心还是绝对像素坐标。
+- 本项目在机器可读摘要中统一使用绝对像素坐标表示主点；输入 XML 中的中心偏移只作为原始来源保留。
 - 若结果来自多轮迭代，必须记录最终采用的是哪一轮。
 
 ## 7. 去畸变图像
@@ -154,8 +167,11 @@
 
 - `frame_id`
 - `temperature_matrix`
+- `temperature_matrix_shape`
+- `temperature_matrix_dtype`
 - `unit`
 - `raw_sensor_reference`
+- `calibration_ref`
 - `radiometric_parameters`
 - `environment_parameters`
 - `timestamp`
@@ -166,6 +182,39 @@
 - 必须区分原始传感器值、辐射校正中间值和最终温度值。
 - 输出必须明确单位，默认摄氏度。
 - 温度矩阵尺寸必须与对应热红外图像一致，除非另行记录重采样。
+
+### 9.4 `radiometric_parameters` 结构
+
+| 字段 | 类型 | 单位 | 必填 | 说明 |
+|---|---|---|---|---|
+| `sensor_model` | string | - | 是 | 传感器型号，优先使用 H30T NIR / Thermal 标识 |
+| `capture_timestamp` | string | ISO 8601 UTC | 是 | 帧采集时间 |
+| `raw_frame_path` | string | - | 是 | 热红外原始帧路径 |
+| `radiometric_mode` | string enum | - | 是 | `radiometric` / `non_radiometric` |
+| `focal_length_mm` | number | mm | 是 | 来自设备元数据的物理焦距 |
+| `f_number` | number | - | 是 | 光圈值 |
+| `iso` | integer | - | 是 | 感光度 |
+| `exposure_time_s` | number | s | 是 | 曝光时间 |
+| `exiftool_version` | string | - | 是 | 用于抽取元数据的 ExifTool 版本 |
+| `sensor_temperature_celsius` | number | °C | 否 | 传感器温度，保留为诊断值 |
+| `lens_temperature_celsius` | number | °C | 否 | 镜头温度，保留为诊断值 |
+| `lrf_target_distance_m` | number | m | 否 | 设备侧距离参考值，仅作诊断引用 |
+| `light_value_ev` | number | EV | 否 | 光照指数，保留为诊断值 |
+| `source_metadata_fields` | array[string] | - | 是 | 原始元数据字段名列表 |
+| `processing_version` | string | - | 是 | 本次辐射校正逻辑版本 |
+
+### 9.5 `environment_parameters` 结构
+
+| 字段 | 类型 | 单位 | 必填 | 说明 |
+|---|---|---|---|---|
+| `ambient_temperature_celsius` | number | °C | 是 | 外部输入的环境空气温度 |
+| `relative_humidity_percent` | number | % | 是 | 空气相对湿度 |
+| `emissivity_ratio` | number | 0-1 | 是 | 材料发射率 |
+| `distance_to_target_m` | number | m | 是 | 用于辐射校正的目标距离 |
+| `reflected_temperature_celsius` | number | °C | 否 | 反射温度 / 背景温度 |
+| `atmospheric_pressure_hpa` | number | hPa | 否 | 大气压 |
+| `source` | string | - | 是 | `manual` / `sensor` / `merged` |
+| `source_ref` | string | - | 否 | 外部测量记录或配置引用 |
 
 ## 10. 重投影记录
 
@@ -235,14 +284,14 @@
 
 建议使用按阶段分层的目录结构，例如：
 
-- `runs/`：运行清单和总日志
-- `calibration/`：标定结果
-- `preprocess/`：去畸变图像和预处理产物
-- `matching/`：对应点、单应性和可视化
-- `radiometry/`：温度矩阵和辐射参数
-- `reconstruction/`：Metashape 项目和点云
-- `enrichment/`：热富集结果
-- `reports/`：质检材料
+- `runs/<run_id>/manifest/`：运行清单、运行配置和总日志
+- `runs/<run_id>/calibration/`：标定结果
+- `runs/<run_id>/preprocess/`：去畸变图像和预处理产物
+- `runs/<run_id>/matching/`：对应点、单应性和可视化
+- `runs/<run_id>/radiometry/`：温度矩阵和辐射参数
+- `runs/<run_id>/reconstruction/`：Metashape 项目和点云
+- `runs/<run_id>/enrichment/`：热富集结果
+- `runs/<run_id>/reports/`：质检材料
 
 ## 14. 非目标
 

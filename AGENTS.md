@@ -5,6 +5,7 @@
 - 总体流程以 [技术路线参考文献.md](技术路线参考文献.md) 为主线，但其中“可见光与热红外影像匹配”阶段必须替换为 [可见光与热红外影像匹配参考文献.md](可见光与热红外影像匹配参考文献.md) 与 [TWMM-main/](TWMM-main/) 中的 TWMM 方法。
 - 实现语言以 Python 为主，集成计算机视觉库与 Agisoft Metashape Professional 2.2.1 的 Python API。
 - 产物必须可批处理、可复现、可审计，并便于后续在新 Session 中继续开发。
+- 项目的物理事实、影像尺寸与标定板几何统一记录在 [docs/dataset_profile.md](docs/dataset_profile.md)，运行参数与路径规则统一记录在 [docs/runtime_config.md](docs/runtime_config.md)。
 
 ## 资料优先级
 - [技术路线参考文献.md](技术路线参考文献.md) 是端到端流程的顶层设计依据。
@@ -16,8 +17,21 @@
 - [M400-H30T-CALIB-CHESSBOARD/](M400-H30T-CALIB-CHESSBOARD/) 是标定板影像数据。
 - [test_Arctic/](test_Arctic/) 是目标处理数据集，热红外分辨率为 1280×1024，可见光分辨率为 4032×3024。
 
+## 文档分层与权责
+- [AGENTS.md](AGENTS.md) 是全局统治文档，任何下层文档的冲突都以它为准，且它必须同步约束所有下层设计文档。
+- [docs/dataset_profile.md](docs/dataset_profile.md) 是不可变物理事实的单一来源，只记录数据集边界、物理尺寸、标定板几何、相机与元数据基线。
+- [docs/runtime_config.md](docs/runtime_config.md) 是运行配置与参数校验的单一来源，只记录一次运行的输入路径、环境参数、阈值、工具链版本和派生规则。
+- [docs/architecture.md](docs/architecture.md) 定义端到端层级、模块边界和跨层约束。
+- [docs/file_formats.md](docs/file_formats.md) 定义所有持久化产物的字段契约与命名规则。
+- [docs/calibration_model.md](docs/calibration_model.md) 定义双光谱标定与去畸变。
+- [docs/matching_algorithm.md](docs/matching_algorithm.md) 定义 TWMM 适配、对应点、外点剔除与单应性估计。
+- [docs/radiometry_model.md](docs/radiometry_model.md) 定义热红外元数据解析与温度矩阵生成。
+- [docs/reconstruction_and_enrichment.md](docs/reconstruction_and_enrichment.md) 定义 Metashape 重建、重投影、可见性与点云热富集。
+
 ## 设计文档体系
 - [docs/architecture.md](docs/architecture.md) 定义全流程数据流、模块边界、运行模式与跨层约束。
+- [docs/dataset_profile.md](docs/dataset_profile.md) 定义不可变数据集事实、影像分辨率与标定板物理尺寸。
+- [docs/runtime_config.md](docs/runtime_config.md) 定义运行配置、参数优先级与校验规则。
 - [docs/file_formats.md](docs/file_formats.md) 定义标定、去畸变、匹配、辐射、重建、富集与导出各阶段的数据契约。
 - [docs/calibration_model.md](docs/calibration_model.md) 定义双光谱标定前处理、相机模型、畸变参数与质量门槛。
 - [docs/matching_algorithm.md](docs/matching_algorithm.md) 定义 TWMM 适配、对应点管理、异常值剔除与单应性估计。
@@ -30,6 +44,7 @@
 - 负责读取数据集路径、相机配置、环境参数、输出目录与运行模式。
 - 负责区分两类数据：标定数据和业务处理数据。
 - 负责统一管理文件命名、路径规范、日志目录、导出目录。
+- 负责读取 [docs/dataset_profile.md](docs/dataset_profile.md) 与 [docs/runtime_config.md](docs/runtime_config.md)，生成可审计的运行上下文、运行清单和阶段阈值快照。
 
 ### 2. 光学系统标定层
 - 使用 9×6 棋盘格完成双光谱标定。
@@ -147,6 +162,9 @@
 - 如果新依赖影响到某一层边界，必须记录它属于哪一层，以及为什么需要它。
 - 如果某个模块变得过于耦合，应先拆分职责，再继续扩展功能。
 - 除非有明确的缺陷或接口不兼容，不要重写 TWMM 的核心算法实现。
+- 如果数据集物理尺寸、相机型号、标定板几何或分辨率发生变化，必须先更新 [docs/dataset_profile.md](docs/dataset_profile.md)，再更新本文件和受影响的设计文档。
+- 如果运行参数结构、阈值或路径规则发生变化，必须先更新 [docs/runtime_config.md](docs/runtime_config.md)，再更新 [docs/file_formats.md](docs/file_formats.md) 与实现。
+- 如果持久化字段、文件命名或目录层级发生变化，必须先更新 [docs/file_formats.md](docs/file_formats.md)，再更新实现。
 
 ## 非目标
 - 不是通用摄影测量平台。

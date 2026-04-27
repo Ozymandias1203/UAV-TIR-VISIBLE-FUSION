@@ -34,6 +34,26 @@
 - 传感器到物体的距离
 - 必要时还包括反射温度或背景温度的估计值
 
+### 3.4 元数据映射与优先级
+
+设备元数据与外部环境参数必须分层处理，优先级从高到低为：外部环境输入、设备元数据、推导值。设备元数据只能作为诊断值、初值或来源记录，不能悄悄替代外部环境输入。
+
+| 原始来源 | 内部字段 | 单位 | 说明 |
+|---|---|---|---|
+| `Make` + `Model` | `sensor_model` | - | 设备型号 |
+| `DateTimeOriginal` / `CreateDate` / `SubSec*` | `capture_timestamp` | ISO 8601 UTC | 帧级时间戳 |
+| `FocalLength` | `focal_length_mm` | mm | 物理焦距，和 calibration XML 的 `f` 不同 |
+| `FNumber` | `f_number` | - | 光圈值 |
+| `ISO` | `iso` | - | 感光度 |
+| `ExposureTime` | `exposure_time_s` | s | 曝光时间 |
+| `SensorTemperature` | `sensor_temperature_celsius` | °C | 诊断值，不得当作环境温度 |
+| `LensTemperature` | `lens_temperature_celsius` | °C | 诊断值，不得当作环境温度 |
+| `LRFTargetDistance` | `lrf_target_distance_m` | m | 设备侧距离参考，仅作诊断 |
+| `LightValue` | `light_value_ev` | EV | 诊断值，可用于质量分析 |
+| `ExifToolVersion` | `exiftool_version` | - | 元数据来源版本 |
+
+如果某一字段缺失，必须在输出中显式列出缺失字段，而不是默默填入隐式默认值。
+
 ## 4. 输出定义
 
 ### 4.1 核心输出
@@ -43,6 +63,8 @@
 - 辐射校正参数
 - 时间戳
 - 质量标记
+- 温度矩阵尺寸
+- 温度矩阵数据类型
 
 ### 4.2 辅助输出
 
@@ -58,6 +80,7 @@
 - 从 DJI SDK 和 ExifTool 汇总与温度计算相关的字段。
 - 将字段映射到统一的内部数据结构。
 - 记录哪些参数来自设备、哪些参数来自外部输入。
+- 记录缺失字段、默认值来源和字段版本，不允许静默降级。
 
 ### 5.2 原始值整理层
 
@@ -105,22 +128,29 @@
 - `sensor_model`
 - `software_version`
 - `raw_image_path`
-- `environment_temperature`
-- `relative_humidity`
-- `emissivity`
-- `distance_to_target`
+- `ambient_temperature_celsius`
+- `relative_humidity_percent`
+- `emissivity_ratio`
+- `distance_to_target_m`
+- `reflected_temperature_celsius`
+- `atmospheric_pressure_hpa`
 - `radiometric_mode`
+- `parameter_source`
+- `parameter_source_ref`
 - `quality_flag`
 
 ### 7.2 输出结构
 
 - `temperature_matrix`
+- `temperature_matrix_shape`
+- `temperature_matrix_dtype`
 - `temperature_unit`
 - `raw_value_range`
 - `corrected_value_range`
 - `intermediate_value_range`
 - `metadata_source`
 - `parameter_source`
+- `missing_fields`
 
 ## 8. 质量门槛
 
@@ -128,6 +158,7 @@
 - 输出矩阵中不应出现大量未解释的 NaN 或极端值。
 - 不同帧之间的温度分布不应出现明显的参数漂移，除非场景本身确实发生变化。
 - 若缺少关键元数据，应输出降级质量标记，而不是默默生成看似正常的结果。
+- 如果缺少 `ambient_temperature_celsius`、`relative_humidity_percent`、`emissivity_ratio` 或 `distance_to_target_m`，必须显式标记为 `degraded` 或 `invalid`，并列出缺失字段。
 
 ## 9. 与其他层的接口
 
@@ -144,6 +175,7 @@
 ### 9.3 与文件格式的关系
 
 - 温度矩阵和元数据应分别保存，并在 file_formats.md 中定义一致的字段。
+- 只要这里新增字段，file_formats.md 里的持久化 schema 必须同步更新，字段名、单位和可选性必须保持完全一致。
 
 ## 10. 失败模式
 
