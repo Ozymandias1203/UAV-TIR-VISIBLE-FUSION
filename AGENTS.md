@@ -8,8 +8,9 @@
 - 项目的物理事实、影像尺寸与标定板几何统一记录在 [docs/dataset_profile.md](docs/dataset_profile.md)，运行参数与路径规则统一记录在 [docs/runtime_config.md](docs/runtime_config.md)。
 
 ## 资料优先级
-- [技术路线参考文献.md](技术路线参考文献.md) 是端到端流程的顶层设计依据。
-- [可见光与热红外影像匹配参考文献.md](可见光与热红外影像匹配参考文献.md) 是跨光谱匹配阶段的算法依据
+- [技术路线参考文献.md](技术路线参考文献.md) 是端到端流程的顶层设计依据（绝对基准）。
+- [可见光与热红外影像匹配参考文献.md](可见光与热红外影像匹配参考文献.md) 是跨光谱匹配阶段的算法依据（绝对基准）。
+- [提炼技术路线参考文献.md](提炼技术路线参考文献.md) 与 [提炼图像匹配参考文献.md](提炼图像匹配参考文献.md) 是提炼这两篇文献内容的对代码项目的指导文件，用于快速了解文献的技术方法。如果出现冲突或者不相符的部分，仍然以两篇原始文献为基准。
 - [TWMM-main/README.md](TWMM-main/README.md) 说明了 TWMM 的官方代码入口与运行方式。
 - [TWMM-main/common/说明.txt](TWMM-main/common/说明.txt) 明确指出这三个公共文件是各算法都需要的共同文件，因此在集成时应视为共享依赖。
 - [metashape_python_api_2_2_1_MinerU__20251017023519.md](metashape_python_api_2_2_1_MinerU__20251017023519.md) 是 Metashape API 的权威参考。
@@ -29,6 +30,7 @@
 - [docs/reconstruction_and_enrichment.md](docs/reconstruction_and_enrichment.md) 定义 Metashape 重建、重投影、可见性与点云热富集。
 
 ## 设计文档体系
+- [提炼技术路线参考文献.md](提炼技术路线参考文献.md) 与 [提炼图像匹配参考文献.md](提炼图像匹配参考文献.md) 是提炼原始文献后得到的对代码项目的具体指导文件，用于快速了解方法与学术挑战，同时服从于系统工程契约。
 - [docs/architecture.md](docs/architecture.md) 定义全流程数据流、模块边界、运行模式与跨层约束。
 - [docs/dataset_profile.md](docs/dataset_profile.md) 定义不可变数据集事实、影像分辨率与标定板物理尺寸。
 - [docs/runtime_config.md](docs/runtime_config.md) 定义运行配置、参数优先级与校验规则。
@@ -47,7 +49,7 @@
 - 负责读取 [docs/dataset_profile.md](docs/dataset_profile.md) 与 [docs/runtime_config.md](docs/runtime_config.md)，生成可审计的运行上下文、运行清单和阶段阈值快照。
 
 ### 2. 光学系统标定层
-- 使用 9×6 棋盘格完成双光谱标定。
+- 使用 12×9 棋盘格完成双光谱标定。
 - RGB 标定前执行对比度归一化与 CLAHE。
 - 热红外标定前执行灰度反转、Otsu 自动二值分割与局部热对比度增强。
 - 输出应包含相机内参、畸变系数、重投影误差、标定质量标记和版本信息。
