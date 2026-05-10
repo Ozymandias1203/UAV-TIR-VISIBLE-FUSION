@@ -1,0 +1,20 @@
+# ==========================================
+# 核心科学计算与计算机视觉库
+# ==========================================
+numpy>=1.21.0
+opencv-python>=4.5.5
+matplotlib>=3.5.0
+h5py>=3.6.0
+PyYAML>=6.0
+
+# ==========================================
+# 注意事项 (Agisoft Metashape)
+# ==========================================
+# 摄影测量层 (photogrammetry.py) 依赖 Agisoft Metashape Professional 2.2.1 的 Python API。
+# 无法直接通过公共 pip 源下载。必须使用官方提供的 .whl 文件或在 Metashape 内置的 Python 环境中运行。
+#
+# 安装示例 (需自行获取官方 wheel 文件):
+# pip install Metashape-2.2.1-cp38-abi3-linux_x86_64.whl
+#
+# 如果以非 Metashape 模式运行流水线的其他部分（例如单纯做测试），
+# try-except 块将捕获 ImportError 并允许其他非重建模块正常加载。
