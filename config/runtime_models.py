@@ -197,6 +197,7 @@ class RuntimeConfig:
             "matching",
             "radiometry",
             "metashape",
+            "reconstruction",
             "geometry",
             "enrichment",
             "io",

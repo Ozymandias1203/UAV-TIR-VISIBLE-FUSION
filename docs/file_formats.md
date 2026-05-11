@@ -289,7 +289,7 @@
 - `runs/<run_id>/preprocess/`：去畸变图像和预处理产物
 - `runs/<run_id>/matching/`：对应点、单应性和可视化
 - `runs/<run_id>/radiometry/`：温度矩阵和辐射参数
-- `runs/<run_id>/reconstruction/`：Metashape 项目和点云
+- `runs/<run_id>/metashape/`：Metashape 项目和点云（兼容旧名 `reconstruction/`）
 - `runs/<run_id>/enrichment/`：热富集结果
 - `runs/<run_id>/reports/`：质检材料
 

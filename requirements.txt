@@ -1,164 +1,43 @@
-# 双光谱热红外/可见光三维点云生成程序 - 依赖包声明
-# 项目: DJI H30T 跨光谱匹配与热辐射处理
-# 生成日期: 2026-05-07
+# 合并自: ./requirements.txt, ./1-3/requirements.txt, ./6-9/requirements.txt
+# 生成日期: 2026-05-10
 
-# ============================================================================
-# 核心依赖 (matching 层、radiometry 层、config 层必需)
-# ============================================================================
+# ==================================================
+# 核心依赖（已合并、去重，选择兼容的较新版本）
+# ==================================================
 
-# 计算机视觉和图像处理
 opencv-python>=4.8.0        # 图像读写、特征检测、几何变换、滤波
 numpy>=1.24.0               # 数组计算、矩阵运算、线性代数
-scipy>=1.17.0               # TWMM 运行时所需的科学计算依赖
-pandas>=3.0.0               # TWMM 运行时所需的数据处理依赖
-torch>=2.11.0               # TWMM 运行时所需的深度学习依赖
-joblib>=1.5.0               # TWMM 运行时所需的并行/缓存依赖
+scipy>=1.17.0               # 科学计算依赖（TWMM 运行时需要）
+pandas>=3.0.0               # 数据处理（TWMM 运行时需要）
+torch>=2.11.0               # 深度学习依赖（TWMM 运行时需要）
+joblib>=1.5.0               # 并行/缓存
 
-# 注：上面四项是本次测试中通过 pip 显式安装的直接依赖；
-# 它们的传递依赖由 pip 自动解析，不建议在此重复手工展开。
+# 图形/可视化 与 I/O
+matplotlib>=3.5.0
+h5py>=3.6.0
+tifffile
+Pillow
+PyYAML>=6.0
 
-# ============================================================================
-# 可选依赖 (enrichment 层、metashape 集成)
-# ============================================================================
 
-# 注意: Agisoft Metashape Professional 2.2.1 的 Python API 需要单独安装
-# 从 Metashape Professional 安装目录的 python/ 子目录手动安装
-# 路径示例: Metashape/App/Metashape/python/
-# 安装命令: pip install <metashape_python_api_path>
-# 参考文档: metashape_python_api_2_2_1_MinerU__20251017023519.md
+# ==================================================
+# 备注与安装说明
+# ==================================================
+# - 本文件为三处 requirements 的合并结果，保留了较新的版本约束以提高兼容性。
+# - Agisoft Metashape Professional 2.2.1 的 Python API 需单独安装（无法通过公开 pip 获取），
+#   若使用重建/富集模块，请参见 docs 与 metashape_python_api_2_2_1_MinerU__20251017023519.md。
+# - TWMM-main（仓库内）通过 sys.path 注入，不需要 pip 安装，但可能需要满足其运行时依赖（torch/scipy/pandas）。
+# - 推荐 Python >= 3.8（建议 3.9+）。
 
-# ============================================================================
-# Python 版本要求
-# ============================================================================
-# Python >= 3.8 (推荐 3.9+)
-# 原因: 
-#   - dataclasses 稳定性 (3.7+ 有 bug)
-#   - typing.Dict/List 泛型支持 (3.9+)
-#   - f-string 性能优化
+# 开发/测试（可选）:
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# black>=22.0.0
+# pylint>=2.15.0
+# mypy>=0.990
 
-# ============================================================================
-# 开发和测试依赖 (可选)
-# ============================================================================
+# 安装示例：
+# python -m venv venv
+# venv\Scripts\activate  # Windows
+# pip install -r requirements.txt
 
-# pytest>=7.0.0                   # 单元测试框架
-# pytest-cov>=4.0.0               # 测试覆盖率
-# black>=22.0.0                   # 代码格式化
-# pylint>=2.15.0                  # 代码静态分析
-# mypy>=0.990                     # 类型检查
-
-# ============================================================================
-# 安装说明
-# ============================================================================
-#
-# 1. 创建虚拟环境 (推荐)
-#    python -m venv venv
-#    source venv/bin/activate  # 在 Linux/Mac 上
-#    或
-#    venv\Scripts\activate     # 在 Windows 上
-#
-# 2. 安装核心依赖
-#    pip install -r requirements.txt
-#
-# 3. 可选: 安装开发工具
-#    pip install pytest pytest-cov black pylint mypy
-#
-# 4. 集成 Metashape Python API (如需使用 enrichment 层)
-#    a. 找到 Metashape 安装目录下的 python 模块
-#       路径通常为: Metashape/App/Metashape/python/
-#    b. 将其添加到 Python 路径或虚拟环境
-#       cp -r Metashape/App/Metashape/python/metashape <venv>/lib/python3.x/site-packages/
-#    c. 或使用 pip install --no-index
-#
-# 5. 集成 TWMM-main 库
-#    本项目已通过动态 sys.path 注入 TWMM-main/TAMM_clean
-#    不需要单独 pip 安装
-#
-# ============================================================================
-# 依赖版本说明
-# ============================================================================
-#
-# opencv-python >= 4.8.0
-#   - cv2.imread, cv2.imwrite 支持 TIFF with IMREAD_UNCHANGED
-#   - cv2.circle, cv2.cvtColor 绘图与色空间转换
-#   - numpy interop 性能优化
-#   参考: https://github.com/opencv/opencv-python/releases
-#
-# numpy >= 1.24.0
-#   - 支持 np.linalg.cond (条件数计算)
-#   - 支持 np.nanmin/nanmax (NaN-aware 统计)
-#   - float32/uint16 dtype 稳定性
-#   参考: https://numpy.org/doc/stable/release/1.24.0-notes.html
-#
-# Metashape >= 2.2.1 (当使用 enrichment 层时)
-#   - 摄影测量重建 API
-#   - 点云导出与坐标变换
-#   参考: metashape_python_api_2_2_1_MinerU__20251017023519.md
-#
-# ============================================================================
-# 依赖关系图
-# ============================================================================
-#
-# 项目依赖层次:
-#
-#   matching/twmm_adapter.py
-#     └─ opencv-python (图像 I/O、几何变换)
-#     └─ numpy (矩阵运算、线性代数)
-#     └─ TWMM-main/TAMM_clean (动态加载，不通过 pip)
-#
-#   radiometry/temperature_pipeline.py
-#     └─ opencv-python (图像 I/O)
-#     └─ numpy (数组处理、统计)
-#
-#   config/runtime_models.py
-#     └─ (仅标准库)
-#
-#   pipeline_cli.py
-#     └─ config (上述模块)
-#     └─ matching (上述模块)
-#     └─ radiometry (上述模块)
-#
-# 后续 enrichment 层会额外依赖:
-#   └─ Metashape (3D 重建、点云处理)
-#
-# ============================================================================
-# 故障排查
-# ============================================================================
-#
-# Q: ImportError: No module named 'cv2'
-# A: 安装 opencv-python
-#    pip install opencv-python>=4.8.0
-#
-# Q: ImportError: No module named 'numpy'
-# A: 安装 numpy
-#    pip install numpy>=1.24.0
-#
-# Q: ModuleNotFoundError: No module named 'thermal_visible'
-# A: TWMM-main/TAMM_clean 路径不正确或未添加到 sys.path
-#    检查 twmm_adapter.py 中的 _load_twmm() 方法
-#    确保 TWMM-main 目录结构正确:
-#      TWMM-main/
-#        ├─ TAMM_clean/
-#        │   ├─ thermal_visible.py
-#        │   └─ image_process.py
-#        └─ ...
-#
-# Q: 版本冲突: numpy/opencv-python 版本不兼容
-# A: 更新到最新稳定版本
-#    pip install --upgrade opencv-python numpy
-#
-# ============================================================================
-# 补充说明
-# ============================================================================
-#
-# 本 requirements.txt 仅列出当前 matching 和 radiometry 层的依赖。
-# 后续若要完整运行 9 层管道，需另外配置:
-#
-# - calibration 层: scikit-image (棋盘格检测)
-# - preprocess 层: 可能需要 scikit-image 的图像处理工具
-# - metashape 层: Agisoft Metashape Professional 2.2.1 的 Python API
-# - enrichment 层: 上述所有库
-# - io 层: 可能需要 laspy (LAS 点云格式)
-#
-# 详见 AGENTS.md § 9 "目录与模块边界"
-#
-# ============================================================================
